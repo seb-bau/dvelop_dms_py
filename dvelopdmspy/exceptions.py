@@ -1,0 +1,2 @@
+class DvelopDMSPyException(Exception):
+    pass
