@@ -3,6 +3,10 @@
 * Recherche mit Filtermöglichkeit Kategorie und Eigenschaft
 * Download des Dokumenten-Blobs
 * Auflösung von Eigenschaften oder Kateogorie-Keys zu Anzeigenamen
+## Installation
+```
+pip install dvelopdmspy
+```
 ## Beispiele
 ### Objekt initialisieren
 ```
@@ -42,4 +46,11 @@ dvelop.download_doc_blob("DOK-ID", dest_file)
 doc = dvelop.get_documents(doc_id="DOC-ID")
 cat_displ_name = dvelop.key_to_display_name(doc[0].sourcecategories)
 print(f"Die Kategorie von Dokument {doc[0].id_} lautet {cat_displ_name}.")
+```
+
+### Wert einer Dokumenteneigenschaft anzeigen
+```
+doc = dvelop.get_documents(doc_id="DOC-ID")
+eig_zust = dvelop.get_property_value(docs[0], "Zuständigkeit")
+print(f"Die Zuständigkeit zu Dok {doc[0].id_} lautet {eig_zust}.")
 ```

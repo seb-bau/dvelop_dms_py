@@ -119,3 +119,13 @@ class DvelopDmsPy:
             out_file.write(result.raw.content)
 
         return True
+
+    def get_property_value(self, doc_obj: DmsDocument, prop_display_name: str):
+        prop_key = self._get_property_key_from_name(prop_display_name)
+        for prop in doc_obj.source_properties:
+            if prop.key == prop_key:
+                if prop.values is None:
+                    return prop.value
+                else:
+                    return prop.values
+
