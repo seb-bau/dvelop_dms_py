@@ -18,7 +18,7 @@ class Links:
     preview_readonly: Optional[str]
     delete_with_reason: Optional[str]
     mainblobcontent: str
-    pdfblobcontent: str
+    pdfblobcontent: Optional[str]
     update_with_content: Optional[str]
     update: Optional[str]
     versions: str
@@ -27,10 +27,11 @@ class Links:
 
     def __init__(self, links_self: Dict,
                  mainblobcontent: Dict,
-                 pdfblobcontent: Dict,
+
                  versions: Dict,
                  display_version: Dict,
                  notes: Dict,
+                 pdfblobcontent: Dict = None,
                  update_with_content: Dict = None,
                  delete_with_reason: Dict = None,
                  update: Dict = None,
@@ -45,7 +46,10 @@ class Links:
         else:
             self.delete_with_reason = None
         self.mainblobcontent = mainblobcontent.get("href")
-        self.pdfblobcontent = pdfblobcontent.get("href")
+        if pdfblobcontent is not None:
+            self.pdfblobcontent = pdfblobcontent.get("href")
+        else:
+            self.pdfblobcontent = None
         if update_with_content is not None:
             self.update_with_content = update_with_content.get("href")
         else:
