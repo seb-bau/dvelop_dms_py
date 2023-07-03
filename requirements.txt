@@ -1,0 +1,4 @@
+setuptools>=65.5.1
+requests>=2.31.0
+jsonmerge>=1.9.0
+pyhumps>=3.8.0

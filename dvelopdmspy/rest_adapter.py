@@ -33,8 +33,10 @@ class RestAdapter:
         self.url = f"https://{hostname}/dms/r/{self.repository}/"
         print(f"Repository {self.repository}")
 
-    def get(self, endpoint: str, ep_params: Dict = None, base_url: str = None) -> Result:
-        return self._do(http_method='GET', endpoint=endpoint, ep_params=ep_params, base_url=base_url)
+    def get(self, endpoint: str, ep_params: Dict = None, base_url: str = None, binary: bool = False,
+            limit: int = None) -> Result:
+        return self._do(http_method='GET', endpoint=endpoint, ep_params=ep_params, base_url=base_url, binary=binary,
+                        limit=limit)
 
     def post(self, endpoint: str, ep_params: Dict = None, data: Dict = None) -> Result:
         return self._do(http_method='POST', endpoint=endpoint, ep_params=ep_params, data=data)
@@ -43,7 +45,7 @@ class RestAdapter:
         return self._do(http_method='DELETE', endpoint=endpoint, ep_params=ep_params, data=data)
 
     def _do(self, http_method: str, endpoint: str, ep_params: Dict = None, data: Dict = None,
-            base_url: str = None) -> Result:
+            base_url: str = None, binary: bool = False, limit: int = None) -> Result:
 
         if base_url is None:
             base_url = self.url
@@ -55,9 +57,14 @@ class RestAdapter:
 
         full_url = base_url + endpoint
         headers = {
-            'Accept': 'application/hal+json',
             'Authorization': f'Bearer {self.api_key}'
         }
+
+        if binary:
+            headers['Accept'] = 'application/octet-stream'
+        else:
+            headers['Accept'] = 'application/hal+json'
+
         log_line_pre = f"method={http_method}, url={full_url}"
         log_line_post = ', '.join((log_line_pre, "success={}, status_code={}, message={}"))
         merge_schema = {"mergeStrategy": "append"}
@@ -70,26 +77,38 @@ class RestAdapter:
             self._logger.error(msg=(str(e)))
             raise DvelopDMSPyException("Request failed") from e
 
-        try:
-            if "items" in response.json().keys():
-                data_out = response.json().get("items")
-            else:
-                data_out = response.json()
-        except (ValueError, JSONDecodeError) as e:
-            self._logger.error(msg=log_line_post.format(False, None, e))
-            raise DvelopDMSPyException("Bad JSON in response") from e
+        if not binary:
+            try:
+                if "items" in response.json().keys():
+                    data_out = response.json().get("items")
+                else:
+                    data_out = response.json()
+            except (ValueError, JSONDecodeError) as e:
+                self._logger.error(msg=log_line_post.format(False, None, e))
+                raise DvelopDMSPyException("Bad JSON in response") from e
 
-        if "_links" in response.json().keys():
-            while "next" in response.json()['_links']:
-                response = requests.request(method=http_method,
-                                            url=f"https://{self.host_base}{response.json()['_links']['next']['href']}",
-                                            headers=headers)
-                data_out = merger.merge(data_out, response.json()['items'])
+            if "_links" in response.json().keys():
+                doc_count = len(data_out)
+                while "next" in response.json()['_links']:
+                    if limit is not None and doc_count >= limit:
+                        break
+                    response = requests.request(method=http_method,
+                                                url=f"https://"
+                                                    f"{self.host_base}{response.json()['_links']['next']['href']}",
+                                                headers=headers)
+                    data_out = merger.merge(data_out, response.json()['items'])
+                    doc_count = len(data_out)
+        else:
+            data_out = None
 
         is_success = 200 <= response.status_code <= 299
         log_line = log_line_post.format(is_success, response.status_code, response.reason)
         if is_success:
             self._logger.debug(msg=log_line)
-            return Result(response.status_code, message=response.reason, data=data_out)
+            if binary:
+                raw = response
+            else:
+                raw = None
+            return Result(response.status_code, message=response.reason, data=data_out, raw=raw)
         self._logger.error(msg=log_line)
         raise DvelopDMSPyException(f"{response.status_code}: {response.reason}")

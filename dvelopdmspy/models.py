@@ -2,43 +2,58 @@ from typing import List, Dict, Optional
 from uuid import UUID
 from enum import Enum
 
+import requests
+
 
 class Result:
-    def __init__(self, status_code: int, message: str = '', data: List[Dict] = None):
+    def __init__(self, status_code: int, message: str = '', data: List[Dict] = None, raw: requests.Response = None):
         self.status_code = int(status_code)
         self.message = str(message)
         self.data = data if data else []
+        self.raw = raw
 
 
 class Links:
     links_self: str
-    preview_readonly: str
-    delete_with_reason: str
+    preview_readonly: Optional[str]
+    delete_with_reason: Optional[str]
     mainblobcontent: str
     pdfblobcontent: str
-    update_with_content: str
-    update: str
+    update_with_content: Optional[str]
+    update: Optional[str]
     versions: str
     display_version: str
     notes: str
 
     def __init__(self, links_self: Dict,
-                 preview_readonly: Dict,
-                 delete_with_reason: Dict,
                  mainblobcontent: Dict,
                  pdfblobcontent: Dict,
-                 update_with_content: Dict,
-                 update: Dict,
                  versions: Dict,
                  display_version: Dict,
-                 notes: Dict) -> None:
+                 notes: Dict,
+                 update_with_content: Dict = None,
+                 delete_with_reason: Dict = None,
+                 update: Dict = None,
+                 preview_readonly: Dict = None) -> None:
         self.links_self = links_self.get("href")
-        self.preview_readonly = preview_readonly.get("href")
-        self.delete_with_reason = delete_with_reason.get("href")
+        if preview_readonly is not None:
+            self.preview_readonly = preview_readonly.get("href")
+        else:
+            self.preview_readonly = None
+        if update_with_content is not None:
+            self.delete_with_reason = delete_with_reason.get("href")
+        else:
+            self.delete_with_reason = None
         self.mainblobcontent = mainblobcontent.get("href")
         self.pdfblobcontent = pdfblobcontent.get("href")
-        self.update_with_content = update_with_content.get("href")
-        self.update = update.get("href")
+        if update_with_content is not None:
+            self.update_with_content = update_with_content.get("href")
+        else:
+            self.update_with_content = None
+        if update is not None:
+            self.update = update.get("href")
+        else:
+            self.update = None
         self.versions = versions.get("href")
         self.display_version = display_version.get("href")
         self.notes = notes.get("href")
@@ -48,10 +63,10 @@ class SourceProperty:
     key: str
     value: str
     values: Optional[list]
-    is_multi_value: bool
+    is_multi_value: Optional[bool]
     display_value: Optional[str]
 
-    def __init__(self, key: str, value: str, is_multi_value: bool, display_value: Optional[str] = None,
+    def __init__(self, key: str, value: str, is_multi_value: bool = None, display_value: Optional[str] = None,
                  values: list = None) -> None:
         self.key = key
         self.value = value
@@ -75,8 +90,11 @@ class DmsDocument:
     source_properties: List[SourceProperty]
     source_categories: List[str]
 
-    def __init__(self, links: Links, id_: str, source_properties: List[Dict],
+    def __init__(self, links: Dict, id_: str, source_properties: List[Dict],
                  source_categories: List[str]) -> None:
+        if links is not None:
+            links["links_self"] = links.pop("self")
+            links = Links(**links)
         self.links = links
         self.id_ = id_
         tsource_properties = []
@@ -106,11 +124,11 @@ class TypeEnum(Enum):
 
 
 class Property:
-    key: str
+    key: UUID
     type_: TypeEnum
     display_name: str
 
-    def __init__(self, key: str, type_: TypeEnum, display_name: str) -> None:
+    def __init__(self, key: UUID, type_: TypeEnum, display_name: str) -> None:
         self.key = key
         self.type_ = type_
         self.display_name = display_name
