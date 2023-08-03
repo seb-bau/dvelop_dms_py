@@ -3,6 +3,7 @@
 * Recherche mit Filtermöglichkeit Kategorie und Eigenschaft
 * Download des Dokumenten-Blobs
 * Auflösung von Eigenschaften oder Kateogorie-Keys zu Anzeigenamen
+* Upload/Archivierung von Dateien inkl. Properties
 ## Installation
 ```
 pip install dvelopdmspy

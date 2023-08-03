@@ -3,14 +3,17 @@ from uuid import UUID
 from enum import Enum
 
 import requests
+from requests.structures import CaseInsensitiveDict
 
 
 class Result:
-    def __init__(self, status_code: int, message: str = '', data: List[Dict] = None, raw: requests.Response = None):
+    def __init__(self, status_code: int, message: str = '', data: List[Dict] = None, raw: requests.Response = None,
+                 headers: CaseInsensitiveDict = None):
         self.status_code = int(status_code)
         self.message = str(message)
         self.data = data if data else []
         self.raw = raw
+        self.headers = headers
 
 
 class Links:

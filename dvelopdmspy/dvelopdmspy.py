@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import humps
 from dvelopdmspy.rest_adapter import RestAdapter
@@ -46,12 +47,65 @@ class DvelopDmsPy:
         pdict[t_key] = pvalue
         return pdict
 
+    def add_upload_property(self, display_name: str, pvalue, plist: list = None) -> list:
+        if plist is None:
+            plist = []
+        t_key = self._get_property_key_from_name(display_name)
+        if type(pvalue) != list:
+            pvalue = [pvalue]
+        plist.append({
+            'key': t_key,
+            'values': pvalue
+        })
+        return plist
+
     def add_category(self, display_name, plist: list = None) -> list:
         if plist is None:
             plist = []
         t_key = self._get_category_key_from_name(display_name)
         plist.append(t_key)
         return plist
+
+    def archive_file(self,
+                     filepath: str,
+                     category_id: str,
+                     properties: list[dict]) -> str | bool:
+        # Blob Upload
+        blob_endpoint = "blob/chunk/"
+        result = self._rest_adapter.post(endpoint=blob_endpoint, binary_upload=True, upload_file_path=filepath)
+        if result.status_code != 201 or "location" not in result.headers:
+            raise DvelopDMSPyException("BLOB upload failed. No blob location detected")
+        blob_location = result.headers["location"]
+
+        # Archivdokument erstellen und mit Blob verbinden
+        blob_to_doc_endpoint = "o2m"
+
+        release_property = {
+            'key': 'property_state',
+            'values': [
+                'Release'
+            ]
+        }
+        properties.append(release_property)
+
+        post_body = {
+            'filename': os.path.basename(filepath),
+            'sourceCategory': category_id,
+            'sourceId': f'/dms/r/{self._rest_adapter.repository}/source',
+            'contentLocationUri': blob_location,
+            'sourceProperties': {
+                'properties': properties
+            }
+        }
+
+        result = self._rest_adapter.post(endpoint=blob_to_doc_endpoint, data=post_body)
+        try:
+            t_loc = result.headers.get("Location")
+            t_doc_id = t_loc.split('?')[0].split('/')[-1]
+        except (KeyError, ValueError):
+            t_doc_id = "unknown"
+
+        return t_doc_id
 
     def get_documents(self,
                       properties: dict[SearchProperty] = None,
@@ -128,4 +182,3 @@ class DvelopDmsPy:
                     return prop.value
                 else:
                     return prop.values
-

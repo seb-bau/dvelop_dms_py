@@ -38,14 +38,17 @@ class RestAdapter:
         return self._do(http_method='GET', endpoint=endpoint, ep_params=ep_params, base_url=base_url, binary=binary,
                         limit=limit)
 
-    def post(self, endpoint: str, ep_params: Dict = None, data: Dict = None) -> Result:
-        return self._do(http_method='POST', endpoint=endpoint, ep_params=ep_params, data=data)
+    def post(self, endpoint: str, ep_params: Dict = None, data: Dict = None, binary_upload: bool = False,
+             upload_file_path: str = None) -> Result:
+        return self._do(http_method='POST', endpoint=endpoint, ep_params=ep_params, data=data,
+                        binary_upload=binary_upload, upload_file_path=upload_file_path)
 
     def delete(self, endpoint: str, ep_params: Dict = None, data: Dict = None) -> Result:
         return self._do(http_method='DELETE', endpoint=endpoint, ep_params=ep_params, data=data)
 
     def _do(self, http_method: str, endpoint: str, ep_params: Dict = None, data: Dict = None,
-            base_url: str = None, binary: bool = False, limit: int = None) -> Result:
+            base_url: str = None, binary: bool = False, limit: int = None, binary_upload: bool = False,
+            upload_file_path: str = None) -> Result:
 
         if base_url is None:
             base_url = self.url
@@ -65,6 +68,20 @@ class RestAdapter:
         else:
             headers['Accept'] = 'application/hal+json'
 
+        if http_method == 'POST':
+            headers['Origin'] = f'https://{self.host_base}'
+
+        blobdata = None
+        if binary_upload:
+            headers['Content-Type'] = 'application/octet-stream'
+
+            try:
+                with open(upload_file_path, 'rb') as f:
+                    blobdata = f.read()
+            except IOError as e:
+                self._logger.error(msg=(str(e)))
+                raise DvelopDMSPyException("Blob upload failed") from e
+
         log_line_pre = f"method={http_method}, url={full_url}"
         log_line_post = ', '.join((log_line_pre, "success={}, status_code={}, message={}"))
         merge_schema = {"mergeStrategy": "append"}
@@ -72,32 +89,39 @@ class RestAdapter:
 
         try:
             self._logger.debug(msg=log_line_pre)
-            response = requests.request(method=http_method, url=full_url, headers=headers, params=ep_params, json=data)
+            response = requests.request(method=http_method, url=full_url, headers=headers, params=ep_params, json=data,
+                                        data=blobdata)
         except requests.exceptions.RequestException as e:
             self._logger.error(msg=(str(e)))
             raise DvelopDMSPyException("Request failed") from e
 
-        if not binary:
+        if not binary and not binary_upload:
+            data_out = None
             try:
-                if "items" in response.json().keys():
-                    data_out = response.json().get("items")
-                else:
-                    data_out = response.json()
-            except (ValueError, JSONDecodeError) as e:
-                self._logger.error(msg=log_line_post.format(False, None, e))
-                raise DvelopDMSPyException("Bad JSON in response") from e
+                jsresp = response.json()
+                data_out = jsresp
+                try:
+                    if "items" in jsresp.keys():
+                        data_out = jsresp.get("items")
+                    else:
+                        data_out = jsresp
+                except (ValueError, JSONDecodeError) as e:
+                    self._logger.info(msg=log_line_post.format(False, None, e))
+                    raise DvelopDMSPyException(f"Bad JSON in response --> {response.text}") from e
 
-            if "_links" in response.json().keys():
-                doc_count = len(data_out)
-                while "next" in response.json()['_links']:
-                    if limit is not None and doc_count >= limit:
-                        break
-                    response = requests.request(method=http_method,
-                                                url=f"https://"
-                                                    f"{self.host_base}{response.json()['_links']['next']['href']}",
-                                                headers=headers)
-                    data_out = merger.merge(data_out, response.json()['items'])
+                if "_links" in jsresp.keys():
                     doc_count = len(data_out)
+                    while "next" in response.json()['_links']:
+                        if limit is not None and doc_count >= limit:
+                            break
+                        response = requests.request(method=http_method,
+                                                    url=f"https://"
+                                                        f"{self.host_base}{response.json()['_links']['next']['href']}",
+                                                    headers=headers)
+                        data_out = merger.merge(data_out, response.json()['items'])
+                        doc_count = len(data_out)
+            except JSONDecodeError:
+                pass
         else:
             data_out = None
 
@@ -109,6 +133,7 @@ class RestAdapter:
                 raw = response
             else:
                 raw = None
-            return Result(response.status_code, message=response.reason, data=data_out, raw=raw)
+            return Result(response.status_code, message=response.reason, data=data_out, raw=raw,
+                          headers=response.headers)
         self._logger.error(msg=log_line)
-        raise DvelopDMSPyException(f"{response.status_code}: {response.reason}")
+        raise DvelopDMSPyException(f"{response.status_code}: {response.reason} --> {response.text}")
