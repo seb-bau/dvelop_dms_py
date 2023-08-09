@@ -2,6 +2,7 @@ import logging
 
 import requests
 import requests.packages
+import requests_cache
 from typing import Dict
 
 from jsonmerge import Merger
@@ -17,6 +18,7 @@ class RestAdapter:
     def __init__(self, hostname: str, api_key: str, repository: str,
                  logger: logging.Logger = None):
 
+        requests_cache.install_cache(backend='memory', expire_after=10800)
         self._logger = logger or logging.getLogger(__name__)
         self.host_base = hostname
         self.repolist_url = f"https://{hostname}/dms/r/"
