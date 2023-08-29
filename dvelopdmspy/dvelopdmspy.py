@@ -38,19 +38,25 @@ class DvelopDmsPy:
             if cat.display_name.lower() == category_name.lower():
                 return str(cat.key)
 
-    def add_property(self, display_name: str, pvalue, pdict: dict = None) -> dict:
+    def add_property(self, display_name: str, pvalue, prop_guid: str = None, pdict: dict = None) -> dict:
         if pdict is None:
             pdict = {}
-        t_key = self._get_property_key_from_name(display_name)
+        if prop_guid is None:
+            t_key = self._get_property_key_from_name(display_name)
+        else:
+            t_key = prop_guid
         if type(pvalue) != list:
             pvalue = [pvalue]
         pdict[t_key] = pvalue
         return pdict
 
-    def add_upload_property(self, display_name: str, pvalue, plist: list = None) -> list:
+    def add_upload_property(self, display_name: str, pvalue, prop_guid: str = None, plist: list = None) -> list:
         if plist is None:
             plist = []
-        t_key = self._get_property_key_from_name(display_name)
+        if prop_guid is None:
+            t_key = self._get_property_key_from_name(display_name)
+        else:
+            t_key = prop_guid
         if type(pvalue) != list:
             pvalue = [pvalue]
         plist.append({
