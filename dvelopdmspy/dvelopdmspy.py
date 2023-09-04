@@ -65,10 +65,13 @@ class DvelopDmsPy:
         })
         return plist
 
-    def add_category(self, display_name, plist: list = None) -> list:
+    def add_category(self, display_name, plist: list = None, category_guid: str = None) -> list:
         if plist is None:
             plist = []
-        t_key = self._get_category_key_from_name(display_name)
+        if category_guid is None:
+            t_key = self._get_category_key_from_name(display_name)
+        else:
+            t_key = category_guid
         plist.append(t_key)
         return plist
 
