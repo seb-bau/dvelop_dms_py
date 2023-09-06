@@ -2,6 +2,7 @@ import logging
 
 import requests
 import requests.packages
+import requests.utils
 import requests_cache
 from typing import Dict
 
@@ -16,9 +17,13 @@ class RestAdapter:
     logger = logging.getLogger(__name__)
 
     def __init__(self, hostname: str, api_key: str, repository: str,
-                 logger: logging.Logger = None):
+                 logger: logging.Logger = None, user_agent: str = None):
 
         requests_cache.install_cache(backend='memory', expire_after=10800)
+        if user_agent is None:
+            self.user_agent = requests.utils.default_headers().get('User-Agent')
+        else:
+            self.user_agent = user_agent
         self._logger = logger or logging.getLogger(__name__)
         self.host_base = hostname
         self.repolist_url = f"https://{hostname}/dms/r/"
@@ -62,6 +67,7 @@ class RestAdapter:
 
         full_url = base_url + endpoint
         headers = {
+            'User-Agent': self.user_agent,
             'Authorization': f'Bearer {self.api_key}'
         }
 

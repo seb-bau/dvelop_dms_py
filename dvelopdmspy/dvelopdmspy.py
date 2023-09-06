@@ -18,8 +18,8 @@ def sanitize_doc(doc_dict) -> DmsDocument:
 
 class DvelopDmsPy:
     def __init__(self, hostname: str, api_key: str, repository: str = None,
-                 logger: logging.Logger = None):
-        self._rest_adapter = RestAdapter(hostname, api_key, repository, logger)
+                 logger: logging.Logger = None, user_agent: str = "DvelopDmsPy/1.0"):
+        self._rest_adapter = RestAdapter(hostname, api_key, repository, logger, user_agent)
         self._source_mappings = self.get_mappings()
 
     def get_mappings(self) -> Mappings:
