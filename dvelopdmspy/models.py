@@ -8,7 +8,9 @@ from requests.structures import CaseInsensitiveDict
 
 class Result:
     def __init__(self, status_code: int, message: str = '', data: List[Dict] = None, raw: requests.Response = None,
-                 headers: CaseInsensitiveDict = None):
+                 headers: CaseInsensitiveDict = None, **kwargs):
+        if kwargs:
+            pass
         self.status_code = int(status_code)
         self.message = str(message)
         self.data = data if data else []
@@ -24,6 +26,7 @@ class Links:
     pdfblobcontent: Optional[str]
     update_with_content: Optional[str]
     update: Optional[str]
+    link_dms_object: Optional[str]
     versions: str
     display_version: str
     notes: str
@@ -38,12 +41,19 @@ class Links:
                  update_with_content: Dict = None,
                  delete_with_reason: Dict = None,
                  update: Dict = None,
-                 preview_readonly: Dict = None) -> None:
+                 preview_readonly: Dict = None,
+                 link_dms_object: Dict = None, **kwargs) -> None:
+        if kwargs:
+            pass
         self.links_self = links_self.get("href")
         if preview_readonly is not None:
             self.preview_readonly = preview_readonly.get("href")
         else:
             self.preview_readonly = None
+        if link_dms_object is not None:
+            self.link_dms_object = link_dms_object.get("href")
+        else:
+            self.link_dms_object = None
         if update_with_content is not None:
             self.delete_with_reason = delete_with_reason.get("href")
         else:
@@ -74,7 +84,9 @@ class SourceProperty:
     display_value: Optional[str]
 
     def __init__(self, key: str, value: str, is_multi_value: bool = None, display_value: Optional[str] = None,
-                 values: list = None) -> None:
+                 values: list = None, **kwargs) -> None:
+        if kwargs:
+            pass
         self.key = key
         self.value = value
         self.is_multi_value = is_multi_value
@@ -86,7 +98,9 @@ class SearchProperty:
     key: str
     values: list
 
-    def __init__(self, key: str, values: list):
+    def __init__(self, key: str, values: list, **kwargs):
+        if kwargs:
+            pass
         self.key = key
         self.values = values
 
@@ -98,7 +112,9 @@ class DmsDocument:
     source_categories: List[str]
 
     def __init__(self, links: Dict, id_: str, source_properties: List[Dict],
-                 source_categories: List[str]) -> None:
+                 source_categories: List[str], **kwargs) -> None:
+        if kwargs:
+            pass
         if links is not None:
             links["links_self"] = links.pop("self")
             links = Links(**links)
@@ -116,7 +132,9 @@ class Category:
     key: UUID
     display_name: str
 
-    def __init__(self, key: UUID, display_name: str) -> None:
+    def __init__(self, key: UUID, display_name: str, **kwargs) -> None:
+        if kwargs:
+            pass
         self.key = key
         self.display_name = display_name
 
@@ -135,7 +153,9 @@ class Property:
     type_: TypeEnum
     display_name: str
 
-    def __init__(self, key: UUID, type_: TypeEnum, display_name: str) -> None:
+    def __init__(self, key: UUID, type_: TypeEnum, display_name: str, **kwargs) -> None:
+        if kwargs:
+            pass
         self.key = key
         self.type_ = type_
         self.display_name = display_name
@@ -147,7 +167,9 @@ class Mappings:
     properties: List[Property]
     categories: List[Category]
 
-    def __init__(self, id_: str, display_name: str, properties: List[Dict], categories: List[Dict]) -> None:
+    def __init__(self, id_: str, display_name: str, properties: List[Dict], categories: List[Dict], **kwargs) -> None:
+        if kwargs:
+            pass
         self.id_ = id_
         self.display_name = display_name
         props = []
