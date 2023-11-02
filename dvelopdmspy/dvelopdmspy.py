@@ -1,11 +1,12 @@
 import json
 import logging
 import os
-
 import humps
+
+from typing import List
 from dvelopdmspy.rest_adapter import RestAdapter
 from dvelopdmspy.exceptions import DvelopDMSPyException
-from dvelopdmspy.models import *
+from dvelopdmspy.models import DmsDocument, Mappings, SearchProperty
 
 
 def sanitize_doc(doc_dict) -> DmsDocument:
@@ -191,3 +192,18 @@ class DvelopDmsPy:
                     return prop.value
                 else:
                     return prop.values
+
+    def get_property_value2(self, doc_obj: DmsDocument, prop_display_name: str = None, prop_guid: str = None) -> dict:
+        ret_dict = {}
+        if prop_guid is None:
+            prop_guid = self._get_property_key_from_name(prop_display_name)
+        for prop in doc_obj.source_properties:
+            if prop.key == prop_guid:
+                if prop.values is not None:
+                    ret_dict["values"] = prop.values
+                if prop.value is not None:
+                    ret_dict["value"] = prop.value
+                if prop.display_value is not None:
+                    ret_dict["display_value"] = prop.display_value
+                break
+        return ret_dict
