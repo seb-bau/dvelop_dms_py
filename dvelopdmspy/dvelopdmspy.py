@@ -121,6 +121,8 @@ class DvelopDmsPy:
             result = self._rest_adapter.put(endpoint=blob_to_doc_endpoint, data=post_body)
         else:
             result = self._rest_adapter.post(endpoint=blob_to_doc_endpoint, data=post_body)
+        if result.status_code > 299:
+            raise DvelopDMSPyException(result.message)
         try:
             t_loc = result.headers.get("Location")
             t_doc_id = t_loc.split('?')[0].split('/')[-1]
