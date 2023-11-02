@@ -79,7 +79,9 @@ class DvelopDmsPy:
     def archive_file(self,
                      filepath: str,
                      category_id: str,
-                     properties: list[dict]) -> str | bool:
+                     properties: list[dict],
+                     doc_id: str = None,
+                     alteration_msg: str = None) -> str | bool:
         # Blob Upload
         blob_endpoint = "blob/chunk/"
         result = self._rest_adapter.post(endpoint=blob_endpoint, binary_upload=True, upload_file_path=filepath)
@@ -89,6 +91,12 @@ class DvelopDmsPy:
 
         # Archivdokument erstellen und mit Blob verbinden
         blob_to_doc_endpoint = "o2m"
+        if doc_id is not None:
+            blob_to_doc_endpoint = f"{blob_to_doc_endpoint}/{doc_id}"
+            if alteration_msg is None or len(alteration_msg) == 0:
+                alteration_msg = "dvelopdmspy: New version"
+        else:
+            alteration_msg = None
 
         release_property = {
             'key': 'property_state',
@@ -108,11 +116,15 @@ class DvelopDmsPy:
             }
         }
 
-        result = self._rest_adapter.post(endpoint=blob_to_doc_endpoint, data=post_body)
+        if alteration_msg is not None:
+            post_body["alterationText"] = alteration_msg
+            result = self._rest_adapter.put(endpoint=blob_to_doc_endpoint, data=post_body)
+        else:
+            result = self._rest_adapter.post(endpoint=blob_to_doc_endpoint, data=post_body)
         try:
             t_loc = result.headers.get("Location")
             t_doc_id = t_loc.split('?')[0].split('/')[-1]
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, AttributeError):
             t_doc_id = "unknown"
 
         return t_doc_id

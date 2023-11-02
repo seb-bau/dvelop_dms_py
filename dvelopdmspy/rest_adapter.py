@@ -50,6 +50,11 @@ class RestAdapter:
         return self._do(http_method='POST', endpoint=endpoint, ep_params=ep_params, data=data,
                         binary_upload=binary_upload, upload_file_path=upload_file_path)
 
+    def put(self, endpoint: str, ep_params: Dict = None, data: Dict = None, binary_upload: bool = False,
+            upload_file_path: str = None) -> Result:
+        return self._do(http_method='PUT', endpoint=endpoint, ep_params=ep_params, data=data,
+                        binary_upload=binary_upload, upload_file_path=upload_file_path)
+
     def delete(self, endpoint: str, ep_params: Dict = None, data: Dict = None) -> Result:
         return self._do(http_method='DELETE', endpoint=endpoint, ep_params=ep_params, data=data)
 
