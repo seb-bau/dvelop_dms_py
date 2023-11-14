@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='dvelopdmspy',
-    version='1.0.12',
+    version='1.0.13',
     description='d.velop DMS API wrapper for python',
     url='https://github.com/seb-bau/dvelop_dms_py',
     author='Sebastian Bauhaus',

@@ -6,7 +6,7 @@ import humps
 from typing import List
 from dvelopdmspy.rest_adapter import RestAdapter
 from dvelopdmspy.exceptions import DvelopDMSPyException
-from dvelopdmspy.models import DmsDocument, Mappings, SearchProperty
+from dvelopdmspy.models import DmsDocument, Mappings, SearchProperty, DmsUser
 
 
 def sanitize_doc(doc_dict) -> DmsDocument:
@@ -15,6 +15,22 @@ def sanitize_doc(doc_dict) -> DmsDocument:
     doc["links"] = doc.pop("_links")
     t_doc = DmsDocument(**doc)
     return t_doc
+
+
+def sanitize_user(user_dict) -> DmsUser:
+    user = dict(humps.decamelize(user_dict))
+    user["id_"] = user.pop("id")
+    name_dict = user.pop("name")
+    user["first_name"] = name_dict.get("given_name")
+    user["last_name"] = name_dict.get("family_name")
+    mail_list = user.pop("emails")
+    if len(mail_list) == 0:
+        user["email_address"] = None
+    else:
+        user["email_address"] = mail_list[0].get("value")
+
+    t_user = DmsUser(**user)
+    return t_user
 
 
 class DvelopDmsPy:
@@ -164,6 +180,16 @@ class DvelopDmsPy:
             ret_docs.append(t_doc)
 
         return ret_docs
+
+    def get_users(self) -> List[DmsUser]:
+        ret_users = []
+        endpoint = "scim/Users"
+        result = self._rest_adapter.get_identity(endpoint=endpoint)
+        resources = result.data.get("resources")
+        for entry in resources:
+            t_user = sanitize_user(entry)
+            ret_users.append(t_user)
+        return ret_users
 
     def key_to_display_name(self, key) -> str:
         if type(key) == list:

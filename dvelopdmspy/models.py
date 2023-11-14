@@ -181,3 +181,27 @@ class Mappings:
         for cat in categories:
             cats.append(Category(**cat))
         self.categories = cats
+
+
+class DmsUser:
+    id_: str
+    user_name: str
+    first_name: str
+    last_name: str
+    display_name: str
+    email_address: str
+
+    def __init__(self, id_: str, user_name: str, first_name: str, last_name: str, display_name: str,
+                 email_address: str, **kwargs) -> None:
+        if kwargs:
+            pass
+        self.id_ = id_
+        self.user_name = user_name
+        self.first_name = first_name
+        self.last_name = last_name
+        self.display_name = display_name
+        self.email_address = email_address
+
+    def __repr__(self):
+        return f"{self.user_name} ({self.id_}) First: {self.first_name} Last: {self.last_name} Email: " \
+               f"{self.email_address}"
