@@ -62,7 +62,7 @@ class DvelopDmsPy:
             t_key = self._get_property_key_from_name(display_name)
         else:
             t_key = prop_guid
-        if type(pvalue) != list:
+        if type(pvalue) is not list:
             pvalue = [pvalue]
         pdict[t_key] = pvalue
         return pdict
@@ -74,7 +74,7 @@ class DvelopDmsPy:
             t_key = self._get_property_key_from_name(display_name)
         else:
             t_key = prop_guid
-        if type(pvalue) != list:
+        if type(pvalue) is not list:
             pvalue = [pvalue]
         plist.append({
             'key': t_key,
@@ -158,11 +158,9 @@ class DvelopDmsPy:
         }
         if properties is not None:
             params["sourceproperties"] = json.dumps(properties)
-        print(params.get("sourceproperties"))
 
         if categories is not None:
             params["sourcecategories"] = json.dumps(categories)
-        print(params.get("sourcecategories"))
 
         # Wurde eine doc_id angegeben, brauchen wir keinen Recherche
         if doc_id is not None:
@@ -171,7 +169,7 @@ class DvelopDmsPy:
             endpoint = "srm"
 
         result = self._rest_adapter.get(endpoint=endpoint, ep_params=params, limit=limit)
-        if type(result.data) == list:
+        if type(result.data) is list:
             for doc in result.data:
                 t_doc = sanitize_doc(doc)
                 ret_docs.append(t_doc)
@@ -192,7 +190,7 @@ class DvelopDmsPy:
         return ret_users
 
     def key_to_display_name(self, key) -> str:
-        if type(key) == list:
+        if type(key) is list:
             for tk in key:
                 if len(tk) > 10:
                     key = tk

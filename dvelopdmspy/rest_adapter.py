@@ -39,7 +39,6 @@ class RestAdapter:
         self.config_url = f"https://{hostname}/dmsconfig/r/{self.repository}/"
         self.identity_url = f"https://{hostname}/identityprovider/"
         self.url = f"https://{hostname}/dms/r/{self.repository}/"
-        print(f"Repository {self.repository}")
 
     def get_identity(self, endpoint: str):
         return self.get(endpoint=endpoint, base_url=self.identity_url)
