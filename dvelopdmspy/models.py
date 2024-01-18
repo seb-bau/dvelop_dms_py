@@ -54,7 +54,7 @@ class Links:
             self.link_dms_object = link_dms_object.get("href")
         else:
             self.link_dms_object = None
-        if update_with_content is not None:
+        if delete_with_reason is not None:
             self.delete_with_reason = delete_with_reason.get("href")
         else:
             self.delete_with_reason = None
