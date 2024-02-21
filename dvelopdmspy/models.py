@@ -1,9 +1,23 @@
 from typing import List, Dict, Optional
 from uuid import UUID
 from enum import Enum
+from datetime import datetime
 
 import requests
 from requests.structures import CaseInsensitiveDict
+
+
+def get_prop_value(doc_props: list, prop_key: str, return_display_value: bool = False):
+    if not doc_props or not prop_key:
+        return None
+    prop_entry: SourceProperty
+    for prop_entry in doc_props:
+        if prop_entry.key == prop_key:
+            if return_display_value:
+                return prop_entry.display_value
+            else:
+                return prop_entry.value
+    return None
 
 
 class Result:
@@ -108,6 +122,21 @@ class SearchProperty:
 class DmsDocument:
     links: Links
     id_: str
+    last_modified: Optional[datetime]
+    last_alteration: Optional[datetime]
+    editor: Optional[str]
+    editor_display: Optional[str]
+    owner: Optional[str]
+    owner_display: Optional[str]
+    caption: Optional[str]
+    filename: Optional[str]
+    filetype: Optional[str]
+    filemimetype: Optional[str]
+    creation_date: Optional[datetime]
+    state: Optional[str]
+    access_date: Optional[datetime]
+    category: Optional[str]
+    category_display: Optional[str]
     source_properties: List[SourceProperty]
     source_categories: List[str]
 
@@ -126,6 +155,45 @@ class DmsDocument:
             tsource_properties.append(tprop)
         self.source_properties = tsource_properties
         self.source_categories = source_categories
+
+        time_format = "%Y-%m-%dT%H:%M:%S.%f%z"
+        try:
+            last_modified_raw = get_prop_value(tsource_properties, prop_key="property_last_modified_date")
+            self.last_modified = datetime.strptime(last_modified_raw, time_format)
+        except (TypeError, ValueError):
+            self.last_modified = None
+
+        try:
+            last_alteration_raw = get_prop_value(tsource_properties, prop_key="property_last_alteration_date")
+            self.last_alteration = datetime.strptime(last_alteration_raw, time_format)
+        except (TypeError, ValueError):
+            self.last_alteration = None
+
+        try:
+            creation_date_raw = get_prop_value(tsource_properties, prop_key="property_creation_date")
+            self.creation_date = datetime.strptime(creation_date_raw, time_format)
+        except (TypeError, ValueError):
+            self.creation_date = None
+
+        try:
+            access_date_raw = get_prop_value(tsource_properties, prop_key="property_access_date")
+            self.access_date = datetime.strptime(access_date_raw, time_format)
+        except (TypeError, ValueError):
+            self.access_date = None
+
+        self.editor = get_prop_value(tsource_properties, prop_key="property_editor")
+        self.editor_display = get_prop_value(tsource_properties, prop_key="property_editor", return_display_value=True)
+        self.owner = get_prop_value(tsource_properties, prop_key="property_owner")
+        self.owner_display = get_prop_value(tsource_properties, prop_key="property_owner", return_display_value=True)
+
+        self.caption = get_prop_value(tsource_properties, prop_key="property_caption")
+        self.filename = get_prop_value(tsource_properties, prop_key="property_filename")
+        self.filetype = get_prop_value(tsource_properties, prop_key="property_filetype")
+        self.filemimetype = get_prop_value(tsource_properties, prop_key="property_filemimetype")
+        self.state = get_prop_value(tsource_properties, prop_key="property_state")
+        self.category = get_prop_value(tsource_properties, prop_key="property_category")
+        self.category_display = get_prop_value(tsource_properties, prop_key="property_category",
+                                               return_display_value=True)
 
 
 class Category:

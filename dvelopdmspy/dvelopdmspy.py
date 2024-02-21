@@ -92,6 +92,54 @@ class DvelopDmsPy:
         plist.append(t_key)
         return plist
 
+    def update_properties(self, doc_id: str, properties: list, alteration_msg: str = None):
+        # if not source_cat:
+        #     try:
+        #         the_doc = DmsDocument
+        #         the_doc = self.get_documents(doc_id=doc_id)[0]
+        #     except (TypeError, IndexError, DvelopDMSPyException) as e:
+        #         raise DvelopDMSPyException(str(e))
+        #     source_cat = self._get_category_key_from_name(the_doc.category_display)
+
+        if not alteration_msg:
+            alteration_msg = "Ohne Kommentar"
+
+        post_body = {
+            'alterationText': alteration_msg,
+            'sourceId': f'/dms/r/{self._rest_adapter.repository}/source',
+            'sourceProperties': {
+                'properties': properties
+            }
+        }
+        update_doc_endpoint = f"o2m/{doc_id}/v/current"
+        result = self._rest_adapter.put(endpoint=update_doc_endpoint, data=post_body)
+        if result.status_code > 299:
+            raise DvelopDMSPyException(result.message)
+        return True
+
+    def set_state_editor(self, doc_id: str, editor_id: str = None, state_string: str = None,
+                             alteration_msg: str = None):
+        if not editor_id and not state_string:
+            return True
+        try:
+            the_doc: DmsDocument
+            the_doc = self.get_documents(doc_id=doc_id)[0]
+        except (TypeError, IndexError) as e:
+            raise DvelopDMSPyException(str(e))
+
+        if not editor_id:
+            # Wenn kein Editor genannt wurde, soll der aktuelle beibehalten werden
+            editor_id = the_doc.editor
+        if not state_string:
+            # Wenn kein State genannt wurde, soll der aktuelle beibehalten werden
+            state_string = the_doc.state
+        if not alteration_msg:
+            alteration_msg = "changed state and/or editor by script"
+
+        props = self.add_upload_property(display_name="", pvalue=editor_id, prop_guid="property_editor")
+        props = self.add_upload_property(display_name="", pvalue=state_string, prop_guid="property_state", plist=props)
+        return self.update_properties(doc_id=doc_id, properties=props, alteration_msg=alteration_msg)
+
     def archive_file(self,
                      filepath: str,
                      category_id: str,
