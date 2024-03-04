@@ -6,7 +6,7 @@ import humps
 from typing import List
 from dvelopdmspy.rest_adapter import RestAdapter
 from dvelopdmspy.exceptions import DvelopDMSPyException
-from dvelopdmspy.models import DmsDocument, Mappings, SearchProperty, DmsUser
+from dvelopdmspy.models import DmsDocument, Mappings, DmsUser, Category
 
 
 def sanitize_doc(doc_dict) -> DmsDocument:
@@ -92,15 +92,7 @@ class DvelopDmsPy:
         plist.append(t_key)
         return plist
 
-    def update_properties(self, doc_id: str, properties: list, alteration_msg: str = None):
-        # if not source_cat:
-        #     try:
-        #         the_doc = DmsDocument
-        #         the_doc = self.get_documents(doc_id=doc_id)[0]
-        #     except (TypeError, IndexError, DvelopDMSPyException) as e:
-        #         raise DvelopDMSPyException(str(e))
-        #     source_cat = self._get_category_key_from_name(the_doc.category_display)
-
+    def update_properties(self, doc_id: str, properties: list, alteration_msg: str = None, state_change: bool = True):
         if not alteration_msg:
             alteration_msg = "Ohne Kommentar"
 
@@ -111,14 +103,16 @@ class DvelopDmsPy:
                 'properties': properties
             }
         }
-        update_doc_endpoint = f"o2m/{doc_id}/v/current"
+        update_doc_endpoint = f"o2m/{doc_id}"
+        if state_change:
+            update_doc_endpoint = f"{update_doc_endpoint}/v/current"
         result = self._rest_adapter.put(endpoint=update_doc_endpoint, data=post_body)
         if result.status_code > 299:
             raise DvelopDMSPyException(result.message)
         return True
 
     def set_state_editor(self, doc_id: str, editor_id: str = None, state_string: str = None,
-                             alteration_msg: str = None):
+                         alteration_msg: str = None):
         if not editor_id and not state_string:
             return True
         try:
@@ -196,8 +190,8 @@ class DvelopDmsPy:
         return t_doc_id
 
     def get_documents(self,
-                      properties: dict[SearchProperty] = None,
-                      categories: list[str] = None,
+                      properties: dict = None,
+                      categories: list = None,
                       limit: int = None,
                       doc_id: str = None) -> List[DmsDocument]:
         ret_docs = []
@@ -236,6 +230,9 @@ class DvelopDmsPy:
             t_user = sanitize_user(entry)
             ret_users.append(t_user)
         return ret_users
+
+    def get_categories(self) -> List[Category]:
+        return self._source_mappings.categories
 
     def key_to_display_name(self, key) -> str:
         if type(key) is list:
