@@ -95,7 +95,7 @@ class RestAdapter:
                 with open(upload_file_path, 'rb') as f:
                     blobdata = f.read()
             except IOError as e:
-                self._logger.error(msg=(str(e)))
+                self._logger.debug(msg=(str(e)))
                 raise DvelopDMSPyException("Blob upload failed") from e
 
         log_line_pre = f"method={http_method}, url={full_url}"
@@ -108,7 +108,7 @@ class RestAdapter:
             response = requests.request(method=http_method, url=full_url, headers=headers, params=ep_params, json=data,
                                         data=blobdata)
         except requests.exceptions.RequestException as e:
-            self._logger.error(msg=(str(e)))
+            self._logger.debug(msg=(str(e)))
             raise DvelopDMSPyException("Request failed") from e
 
         if not binary and not binary_upload:
@@ -122,7 +122,7 @@ class RestAdapter:
                     else:
                         data_out = jsresp
                 except (ValueError, JSONDecodeError) as e:
-                    self._logger.info(msg=log_line_post.format(False, None, e))
+                    self._logger.debug(msg=log_line_post.format(False, None, e))
                     raise DvelopDMSPyException(f"Bad JSON in response --> {response.text}") from e
 
                 if "_links" in jsresp.keys():
@@ -151,5 +151,5 @@ class RestAdapter:
                 raw = None
             return Result(response.status_code, message=response.reason, data=data_out, raw=raw,
                           headers=response.headers)
-        self._logger.error(msg=log_line)
+        self._logger.debug(msg=log_line)
         raise DvelopDMSPyException(f"{response.status_code}: {response.reason} --> {response.text}")
