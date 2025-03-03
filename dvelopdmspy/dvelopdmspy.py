@@ -134,6 +134,16 @@ class DvelopDmsPy:
         props = self.add_upload_property(display_name="", pvalue=state_string, prop_guid="property_state", plist=props)
         return self.update_properties(doc_id=doc_id, properties=props, alteration_msg=alteration_msg)
 
+    def delete_document(self,
+                        doc_id: str = None,
+                        delete_reason: str = None):
+        endpoint = f"o2m/{doc_id}"
+        data = {
+            "reason": delete_reason
+        }
+        self._rest_adapter.delete(endpoint=endpoint, ep_params=None, data=data)
+        return True
+
     def archive_file(self,
                      filepath: str,
                      category_id: str,
