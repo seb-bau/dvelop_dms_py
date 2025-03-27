@@ -203,7 +203,8 @@ class DvelopDmsPy:
                       properties: dict = None,
                       categories: list = None,
                       limit: int = None,
-                      doc_id: str = None) -> List[DmsDocument]:
+                      doc_id: str = None,
+                      fulltext: str = None) -> List[DmsDocument]:
         ret_docs = []
         params = {
             "sourceid": f"/dms/r/{self._rest_adapter.repository}/source"
@@ -213,6 +214,9 @@ class DvelopDmsPy:
 
         if categories is not None:
             params["sourcecategories"] = json.dumps(categories)
+
+        if fulltext:
+            params["fulltext"] = fulltext
 
         # Wurde eine doc_id angegeben, brauchen wir keinen Recherche
         if doc_id is not None:
